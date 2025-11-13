@@ -225,8 +225,8 @@ enum Role {
   veterinario
 }
 
-generator erd {
-  provider = "prisma-erd-generator"
-  output   = "ERD.svg"
-  theme    = "bright"
-}
+// generator erd {
+//   provider = "prisma-erd-generator"
+//   output   = "ERD.svg"
+//   theme    = "bright"
+// }
