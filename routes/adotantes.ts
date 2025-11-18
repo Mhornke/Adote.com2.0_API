@@ -103,6 +103,30 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ erro: "Erro ao fazer login." });
   }
 });
+// Atualizar adotante
+router.patch("/:id", async (req, res) => {
+  const { id } = req.params;
+  const { nome, fone, endereco, email, senha } = req.body;
+
+  try {
+    const dataUpdate: any = { nome, fone, endereco, email };
+    if (senha) {
+      const salt = bcrypt.genSaltSync(12);
+      dataUpdate.senha = bcrypt.hashSync(senha, salt);
+    }
+
+    const adotanteAtualizado = await prisma.adotante.update({
+      where: { id },
+      data: dataUpdate
+    });
+
+    res.status(200).json(adotanteAtualizado);
+  } catch (error) {
+    console.error("Erro ao atualizar adotante:", error);
+    res.status(500).json({ erro: "Erro ao atualizar adotante." });
+  }
+});
+
 
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
