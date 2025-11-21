@@ -79,28 +79,33 @@ model AnimalPerdido {
 }
 
 model Adotante {
-  id           String           @id @default(uuid())
+  id           String       @id @default(uuid())
   nome         String
   fone         String
   endereco     String
-  email        String           @unique
+  email        String        @unique
   senha        String
   recoveryCode String?
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  pedidos      Pedido[]
-  adocoes      Adocao[]
-  posts        PostComunidade[]
-  comentarios  Comentario[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
-  chatsParticipante1 Chat[]          @relation("MensagemRemetente")
-  chatsParticipante2 Chat[]          @relation("MensagemDestinatario")
-  animaisPerdidos    AnimalPerdido[]
-  mensagems          Mensagem[]
-  
-  
+  // Relações com chat
+  chatsComoP1  Chat[]        @relation("ChatParticipante1")
+  chatsComoP2  Chat[]        @relation("ChatParticipante2")
+
+  // Relações com mensagens
+  mensagensEnviadas    Mensagem[] @relation("MensagemRemetente")
+  mensagensRecebidas   Mensagem[] @relation("MensagemDestinatario")
+
+  animaisPerdidos AnimalPerdido[]
+  pedidos        Pedido[]
+  adocoes        Adocao[]
+  posts          PostComunidade[]
+  comentarios    Comentario[]
+
   @@map("adotantes")
 }
+
 
 model Admin {
   id              Int              @id @default(autoincrement())
@@ -217,21 +222,24 @@ model Comentario {
 model Mensagem {
   id             Int      @id @default(autoincrement())
   conteudo       String   @db.Text
+
   remetenteId    String
   destinatarioId String
   chatId         String
   animalId       Int
+
   lida           Boolean  @default(false)
   dataEnvio      DateTime @default(now())
 
-  remetente      Adotante @relation("MensagemRemetente", fields: [remetenteId], references: [id])
-  destinatario   Adotante @relation("MensagemDestinatario", fields: [destinatarioId], references: [id])
+  remetente    Adotante @relation("MensagemRemetente", fields: [remetenteId], references: [id])
+  destinatario Adotante @relation("MensagemDestinatario", fields: [destinatarioId], references: [id])
 
-  chat           Chat     @relation(fields: [chatId], references: [id])
-  animal         AnimalPerdido @relation("AnimalMensagem", fields: [animalId], references: [id])
+  chat   Chat            @relation(fields: [chatId], references: [id])
+  animal AnimalPerdido   @relation("AnimalMensagem", fields: [animalId], references: [id])
 
   @@map("mensagens")
 }
+
 
 
 model Chat {
@@ -248,11 +256,12 @@ model Chat {
 
   mensagens Mensagem[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@map("chats")
 }
+
 
 enum Portes {
   Pequeno
