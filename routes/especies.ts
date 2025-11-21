@@ -23,7 +23,7 @@ const prisma = new PrismaClient({
   ],
 })
 
-prisma.$on('query', (e) => {
+prisma.$on('query', (e: Prisma.QueryEvent) => {
   console.log('Query: ' + e.query)
   console.log('Params: ' + e.params)
   console.log('Duration: ' + e.duration + 'ms')
@@ -103,5 +103,6 @@ router.get("/lista/animais", async (req, res) => {
     res.status(400).json(error)
   }
 })
+
 
 export default router
