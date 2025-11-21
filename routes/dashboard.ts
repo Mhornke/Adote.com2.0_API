@@ -24,9 +24,9 @@ router.get("/animaisEspecie", async (req, res) => {
       }
     })
 
-    // Para cada carro, inclui o nome da marca relacionada ao marcaId
+  
     const animaisEspecie = await Promise.all(
-      animais.map(async (animal) => {
+     animais.map(async (animal: { especieId: number; _count: { id: number } }) => {
         const especie = await prisma.especie.findUnique({
           where: { id: animal.especieId }
         })
