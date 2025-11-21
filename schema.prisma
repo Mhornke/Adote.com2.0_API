@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -8,10 +9,11 @@ datasource db {
 }
 
 model Especie {
-  id      Int      @id @default(autoincrement())
-  nome    String
-  animais Animal[]
+  id              Int             @id @default(autoincrement())
+  nome            String
+  animais         Animal[]
   animaisPerdidos AnimalPerdido[]
+
   @@map("especies")
 }
 
@@ -20,143 +22,156 @@ model Animal {
   nome             String
   idade            Int
   sexo             Sexos
-  castracao        Boolean             @default(false)
+  castracao        Boolean            @default(false)
   descricao        String?
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
-  porte            Portes              @default(Medio)
-  especie          Especie             @relation(fields: [especieId], references: [id])
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  porte            Portes             @default(Medio)
+  especie          Especie            @relation(fields: [especieId], references: [id])
   especieId        Int
-  admin            Admin               @relation(fields: [adminId], references: [id])
-  adminId          Int                 @default(1)
-  fotos            Foto[]              @relation("FotoAnimal")
+  admin            Admin              @relation(fields: [adminId], references: [id])
+  adminId          Int                @default(1)
+  fotos            Foto[]             @relation("FotoAnimal")
   pedidos          Pedido[]
   vacinasAplicadas VacinasAplicadas[]
   adocoes          Adocao[]
-  disponivel       Boolean             @default(true)
+  disponivel       Boolean            @default(true)
+
   @@map("animais")
 }
 
 model Foto {
-  id               Int    @id @default(autoincrement())
-  descricao        String
-  codigoFoto       String @db.Text
-  animalId         Int?
-  animalPerdidoId  Int?
+  id              Int    @id @default(autoincrement())
+  descricao       String
+  codigoFoto      String @db.Text
+  animalId        Int?
+  animalPerdidoId Int?
 
-  animalNormal    Animal?         @relation("FotoAnimal", fields: [animalId], references: [id])
-  animalPerdido   AnimalPerdido?  @relation("FotoAnimalPerdido", fields: [animalPerdidoId], references: [id])
+  animalNormal  Animal?        @relation("FotoAnimal", fields: [animalId], references: [id])
+  animalPerdido AnimalPerdido? @relation("FotoAnimalPerdido", fields: [animalPerdidoId], references: [id])
+
+  postComunidade   PostComunidade? @relation("PostToFoto", fields: [postComunidadeId], references: [id])
+  postComunidadeId Int?
 
   @@map("fotos")
 }
 
 model AnimalPerdido {
-  id             Int           @id @default(autoincrement())
-  nome           String
-  descricao      String?
-  tipoAnuncio    TipoAnuncio   // Enum: "ENCONTREI" ou "PERDI"
-  localizacao    String?       // Bairro, rua ou ponto de referência
-  contato        String?       // Telefone ou e-mail de quem publicou
-  encontrado     Boolean       @default(false)
-  dataEncontrado DateTime?     // Quando foi marcado como encontrado
-  fotos          Foto[]        @relation("FotoAnimalPerdido")
-  adotante       Adotante?     @relation(fields: [adotanteId], references: [id])
+  id             Int         @id @default(autoincrement())
+  nome           String?
+  descricao      String
+  tipoAnuncio    TipoAnuncio // Enum: "ENCONTREI" ou "PERDI"
+  localizacao    String? // Bairro, rua ou ponto de referência
+  contato        String? // Telefone ou e-mail de quem publicou
+  encontrado     Boolean     @default(false)
+  dataEncontrado DateTime? // Quando foi marcado como encontrado
+  fotos          Foto[]      @relation("FotoAnimalPerdido")
+  adotante       Adotante?   @relation(fields: [adotanteId], references: [id])
   adotanteId     String?
-  especie        Especie?      @relation(fields: [especieId], references: [id])
+  especie        Especie?    @relation(fields: [especieId], references: [id])
   especieId      Int?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  chats          Chat[]      @relation("AnimalChat")
+  mensagens      Mensagem[]  @relation("AnimalMensagem")
 
   @@map("animais_perdidos")
 }
 
 model Adotante {
-  id           String            @id @default(uuid())
+  id           String           @id @default(uuid())
   nome         String
   fone         String
   endereco     String
-  email        String            @unique
+  email        String           @unique
   senha        String
   recoveryCode String?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
   pedidos      Pedido[]
   adocoes      Adocao[]
   posts        PostComunidade[]
   comentarios  Comentario[]
-  mensagensEnviadas  Mensagem[]  @relation("MensagensEnviadas")
-  mensagensRecebidas Mensagem[]  @relation("MensagensRecebidas")
-  animaisPerdidos    AnimalPerdido[]
 
+  chatsParticipante1 Chat[]          @relation("MensagemRemetente")
+  chatsParticipante2 Chat[]          @relation("MensagemDestinatario")
+  animaisPerdidos    AnimalPerdido[]
+  mensagems          Mensagem[]
+  
+  
   @@map("adotantes")
 }
 
-
 model Admin {
-  id                Int                 @id @default(autoincrement())
-  nome              String
-  email             String              @unique
-  senha             String
-  role              Role                @default(admin)
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  animais           Animal[]
-  acompanhamentos   Acompanhamento[]
+  id              Int              @id @default(autoincrement())
+  nome            String
+  email           String           @unique
+  senha           String
+  role            Role             @default(admin)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  animais         Animal[]
+  acompanhamentos Acompanhamento[]
+
   @@map("admins")
 }
 
 model Pedido {
-  id          Int       @id @default(autoincrement())
-  adotante    Adotante  @relation(fields: [adotanteId], references: [id])
-  adotanteId  String
-  animal      Animal    @relation(fields: [animalId], references: [id])
-  animalId    Int
-  descricao   String
-  resposta    String?
-  aprovado    Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  adocao      Adocao?
+  id         Int      @id @default(autoincrement())
+  adotante   Adotante @relation(fields: [adotanteId], references: [id])
+  adotanteId String
+  animal     Animal   @relation(fields: [animalId], references: [id])
+  animalId   Int
+  descricao  String
+  resposta   String?
+  aprovado   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  adocao     Adocao?
+
   @@map("pedidos")
 }
 
 model Adocao {
-  id                Int                @id @default(autoincrement())
-  pedidoId          Int?               @unique
-  pedido            Pedido?            @relation(fields: [pedidoId], references: [id])
-  adotante          Adotante           @relation(fields: [adotanteId], references: [id])
-  adotanteId        String
-  animal            Animal             @relation(fields: [animalId], references: [id])
-  animalId          Int
-  dataAdocao        DateTime           @default(now())
-  status            StatusAdocao       @default(Ativa)
-  acompanhamentos   Acompanhamento[]
+  id              Int              @id @default(autoincrement())
+  pedidoId        Int?             @unique
+  pedido          Pedido?          @relation(fields: [pedidoId], references: [id])
+  adotante        Adotante         @relation(fields: [adotanteId], references: [id])
+  adotanteId      String
+  animal          Animal           @relation(fields: [animalId], references: [id])
+  animalId        Int
+  dataAdocao      DateTime         @default(now())
+  status          StatusAdocao     @default(Ativa)
+  acompanhamentos Acompanhamento[]
+
   @@map("adocoes")
 }
 
 model Acompanhamento {
-  id                Int                 @id @default(autoincrement())
-  adocao            Adocao              @relation(fields: [adocaoId], references: [id])
-  adocaoId          Int
-  dataVisita        DateTime            @default(now())
-  observacoes       String?
-  vacinasAplicadas  VacinasAplicadas[]
-  proximaVisita     DateTime?
-  usuario           Admin?              @relation(fields: [usuarioId], references: [id])
-  usuarioId         Int?
+  id               Int                @id @default(autoincrement())
+  adocao           Adocao             @relation(fields: [adocaoId], references: [id])
+  adocaoId         Int
+  dataVisita       DateTime           @default(now())
+  observacoes      String?
+  vacinasAplicadas VacinasAplicadas[]
+  proximaVisita    DateTime?
+  usuario          Admin?             @relation(fields: [usuarioId], references: [id])
+  usuarioId        Int?
+
   @@map("acompanhamentos")
 }
 
 model VacinasAplicadas {
-  id                Int       @id @default(autoincrement())
-  nome              String
-  animal            Animal    @relation(fields: [animalId], references: [id])
-  animalId          Int
-  acompanhamento    Acompanhamento? @relation(fields: [acompanhamentoId], references: [id])
-  acompanhamentoId  Int?
-  dataAplicacao     DateTime  @default(now())
-  aplicadoPor       String?
-  observacoes       String?
+  id               Int             @id @default(autoincrement())
+  nome             String
+  animal           Animal          @relation(fields: [animalId], references: [id])
+  animalId         Int
+  acompanhamento   Acompanhamento? @relation(fields: [acompanhamentoId], references: [id])
+  acompanhamentoId Int?
+  dataAplicacao    DateTime        @default(now())
+  aplicadoPor      String?
+  observacoes      String?
+
   @@map("vacinas_aplicadas")
 }
 
@@ -168,6 +183,8 @@ model PostComunidade {
   adotante    Adotante     @relation(fields: [adotanteId], references: [id])
   adotanteId  String
   createdAt   DateTime     @default(now())
+  fotos       Foto[]       @relation("PostToFoto")
+
   @@map("posts_comunidade")
 }
 
@@ -180,22 +197,62 @@ model Comentario {
   postComunidade   PostComunidade? @relation(fields: [postComunidadeId], references: [id])
   postComunidadeId Int?
   createdAt        DateTime        @default(now())
+
   @@map("comentarios")
 }
 
+// model Mensagem {
+//   id             Int      @id @default(autoincrement())
+//   conteudo       String
+//   dataEnvio      DateTime @default(now())
+//   remetente      Adotante @relation("MensagensEnviadas", fields: [remetenteId], references: [id])
+//   remetenteId    String
+//   destinatario   Adotante @relation("MensagensRecebidas", fields: [destinatarioId], references: [id])
+//   destinatarioId String
+//   lida           Boolean  @default(false)
+
+//   @@map("mensagens")
+// }
+
 model Mensagem {
-  id           Int       @id @default(autoincrement())
-  conteudo     String
-  dataEnvio    DateTime  @default(now())
-  remetente    Adotante  @relation("MensagensEnviadas", fields: [remetenteId], references: [id])
-  remetenteId  String
-  destinatario Adotante  @relation("MensagensRecebidas", fields: [destinatarioId], references: [id])
+  id             Int      @id @default(autoincrement())
+  conteudo       String   @db.Text
+  remetenteId    String
   destinatarioId String
-  lida         Boolean   @default(false)
+  chatId         String
+  animalId       Int
+  lida           Boolean  @default(false)
+  dataEnvio      DateTime @default(now())
+
+  remetente      Adotante @relation("MensagemRemetente", fields: [remetenteId], references: [id])
+  destinatario   Adotante @relation("MensagemDestinatario", fields: [destinatarioId], references: [id])
+
+  chat           Chat     @relation(fields: [chatId], references: [id])
+  animal         AnimalPerdido @relation("AnimalMensagem", fields: [animalId], references: [id])
 
   @@map("mensagens")
 }
 
+
+model Chat {
+  id String @id @default(uuid())
+
+  participante1Id String
+  participante2Id String
+
+  participante1 Adotante @relation("ChatParticipante1", fields: [participante1Id], references: [id])
+  participante2 Adotante @relation("ChatParticipante2", fields: [participante2Id], references: [id])
+
+  animalId Int
+  animal   AnimalPerdido @relation("AnimalChat", fields: [animalId], references: [id])
+
+  mensagens Mensagem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("chats")
+}
 
 enum Portes {
   Pequeno
@@ -209,8 +266,8 @@ enum Sexos {
 }
 
 enum TipoAnuncio {
-  PERDI       // Tutor perdeu o animal
-  ENCONTREI   // Pessoa encontrou um animal na rua
+  PERDI // Tutor perdeu o animal
+  ENCONTREI // Pessoa encontrou um animal na rua
 }
 
 enum StatusAdocao {

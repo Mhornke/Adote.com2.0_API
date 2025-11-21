@@ -1,5 +1,5 @@
 // src/routes/animalPerdido.ts
-import { PrismaClient, TipoAnuncio } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { Router } from "express";
 import { verificaToken } from "../middewares/verificaToken";
 
@@ -55,7 +55,7 @@ router.post("/", verificaToken, async (req: any, res) => {
 
   const adotanteId = req.user?.id; // assumindo que o token adiciona req.user.id
 
-  if (!nome || !tipoAnuncio) {
+  if (!descricao) {
     return res.status(400).json({ erro: "Nome e tipoAnuncio são obrigatórios" });
   }
 
