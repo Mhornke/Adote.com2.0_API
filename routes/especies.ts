@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient, Prisma  } from "@prisma/client"
 import { Router } from "express"
 
 // const prisma = new PrismaClient()
@@ -106,3 +106,4 @@ router.get("/lista/animais", async (req, res) => {
 
 
 export default router
+
