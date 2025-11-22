@@ -23,7 +23,7 @@ const prisma = new PrismaClient({
   ],
 })
 
-prisma.$on('query', (e: Prisma.QueryEvent) => {
+prisma.$on('query', (e: any) => {
   console.log('Query: ' + e.query)
   console.log('Params: ' + e.params)
   console.log('Duration: ' + e.duration + 'ms')
@@ -36,6 +36,7 @@ router.get("/", async (req, res) => {
     const especies = await prisma.especie.findMany()
     res.status(200).json(especies)
   } catch (error) {
+    console.error("Erro ao buscar espécies:", error);
     res.status(400).json(error)
   }
 })
@@ -54,6 +55,7 @@ router.post("/", async (req, res) => {
     })
     res.status(201).json(especies)
   } catch (error) {
+     console.error("Erro ao criar espécie:", error);
     res.status(400).json(error)
   }
 })
@@ -67,6 +69,7 @@ router.delete("/:id", async (req, res) => {
     })
     res.status(200).json(especies)
   } catch (error) {
+    console.error("Erro ao deletar espécie:", error);
     res.status(400).json(error)
   }
 })
@@ -87,6 +90,7 @@ router.put("/:id", async (req, res) => {
     })
     res.status(200).json(especie)
   } catch (error) {
+     console.error("Erro ao atualizar espécie:", error);
     res.status(400).json(error)
   }
 })
@@ -100,10 +104,12 @@ router.get("/lista/animais", async (req, res) => {
     })
     res.status(200).json(especies)
   } catch (error) {
+    console.error("Erro ao listar espécies com animais:", error);
     res.status(400).json(error)
   }
 })
 
 
 export default router
+
 
