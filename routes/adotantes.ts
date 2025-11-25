@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { Router } from "express";
 import bcrypt from 'bcrypt';
-
+import { gerarTokenAdotante } from "../tokenService";
 
 import nodemailer from 'nodemailer'; // Importando nodemailer
 import crypto from 'crypto'; // Para gerar um código aleatório
@@ -77,7 +77,7 @@ router.post("/", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  const { email, senha } = req.body;
+  const { email, senha, manterConectado } = req.body;
   const mensaPadrao = "Login ou senha incorretos";
 
   if (!email || !senha) {
@@ -92,17 +92,25 @@ router.post("/login", async (req, res) => {
     if (!adotante || !bcrypt.compareSync(senha, adotante.senha)) {
       return res.status(400).json({ erro: mensaPadrao });
     }
-
+const token = gerarTokenAdotante(
+  {
+    id: adotante.id,
+    nome: adotante.nome
+  },
+  manterConectado
+)
     res.status(200).json({
       id: adotante.id,
       nome: adotante.nome,
-      email: adotante.email
+      email: adotante.email,
+      token: token
     });
   } catch (error) {
     console.error("Erro ao fazer login:", error);
     res.status(500).json({ erro: "Erro ao fazer login." });
   }
 });
+
 // Atualizar adotante
 router.patch("/:id", async (req, res) => {
   const { id } = req.params;
