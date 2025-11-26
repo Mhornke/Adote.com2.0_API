@@ -20,7 +20,7 @@ export function gerarTokenAdotante(usuario: UserPayload, manterConectado: boolea
   // Lógica: Se manterConectado for true, 7 dias ('7d'). Se não, 1 hora ('1h').
   const tempoDeVida = manterConectado ? '7d' : '1h';
 
-  const token = jwt.sign(payload, process.env.JWT_SECRET, {
+  const token = jwt.sign(payload, process.env.JWT_KEY, {
     expiresIn: tempoDeVida, 
   });
 
