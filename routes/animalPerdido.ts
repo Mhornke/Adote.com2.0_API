@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
     const perdidos = await prisma.animalPerdido.findMany({
       include: {
         fotos: true,
-        adotante: { select: {di:true, nome: true, email: true, fone: true } },
+        adotante: { select: {id:true, nome: true, email: true, fone: true } },
         especie: { select: { nome: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -31,7 +31,7 @@ router.get("/:id", async (req, res) => {
       where: { id: Number(req.params.id) },
       include: {
         fotos: true,
-        adotante: { select: {di:true, nome: true, email: true, fone: true } },
+        adotante: { select: {id:true, nome: true, email: true, fone: true } },
         especie: { select: { nome: true } },
       },
     });
