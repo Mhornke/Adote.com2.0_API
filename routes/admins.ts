@@ -66,7 +66,7 @@ router.post("/", async (req, res) => {
 
       const token = req.headers.authorization.split(" ")[1]
       try {
-        const decoded: any = jwt.verify(token, process.env.JWT_SECRET as string)
+        const decoded: any = jwt.verify(token, process.env.JWT_KEY as string)
         if (decoded.role !== "master") {
           return res.status(403).json({ erro: "Apenas admins master podem criar novos admins" })
         }
