@@ -29,7 +29,7 @@ async function enviaEmail(nome: string, email: string, descricao: string, respos
   });
 }
 
-// ✅ Criar pedido e enviar e-mail de confirmação automática
+// Criar pedido e enviar e-mail de confirmação automática
 router.post("/", async (req, res) => {
   const { adotanteId, animalId, descricao } = req.body;
   if (!adotanteId || !animalId || !descricao)
@@ -39,19 +39,22 @@ router.post("/", async (req, res) => {
     const pedido = await prisma.pedido.create({
       data: { adotanteId, animalId, descricao },
       include: {
+        // 🔒 SEGURANÇA: Usamos 'select' para não trazer a senha
         adotante: {
-           id: true,
-          nome: true,
-          fone: true,
-          email:true,
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+            fone: true
+          }
         },
         animal: {
-          include: { especie: true, fotos: true } // ✅ incluir fotos e espécie
+          include: { especie: true, fotos: true }
         }
       }
     });
 
-    // Envio de e-mail confirmando recebimento do pedido
+    // O TypeScript agora sabe que pedido.adotante tem 'nome' e 'email'
     await enviaEmail(
       pedido.adotante.nome,
       pedido.adotante.email,
@@ -64,7 +67,8 @@ router.post("/", async (req, res) => {
     res.status(400).json(error);
   }
 });
-// ✅ Verificar se usuário já enviou pedido para um animal específico
+
+// Verificar se usuário já enviou pedido para um animal específico
 router.get("/verificar", async (req, res) => {
   const { adotanteId, animalId } = req.query;
 
@@ -73,7 +77,6 @@ router.get("/verificar", async (req, res) => {
   }
 
   try {
-    // Busca se existe algum pedido com esses dois IDs
     const pedidoExistente = await prisma.pedido.findFirst({
       where: {
         adotanteId: String(adotanteId),
@@ -81,17 +84,17 @@ router.get("/verificar", async (req, res) => {
       }
     });
 
-    // Retorna um objeto com um booleano
     res.status(200).json({ 
-      jaEnviado: !!pedidoExistente, // Converte para true se existir, false se for null
-      pedido: pedidoExistente // Opcional: devolve o pedido caso queira mostrar o status atual
+      jaEnviado: !!pedidoExistente,
+      pedido: pedidoExistente 
     });
 
   } catch (error) {
     res.status(500).json({ erro: "Erro ao verificar status do pedido", detalhes: error });
   }
 });
-// ✅ Aprovar ou rejeitar pedido e criar adoção + acompanhamento se aprovado
+
+
 router.patch("/:id", verificaToken, async (req, res) => {
   const { id } = req.params;
   const { resposta, aprovado, usuarioId } = req.body;
@@ -99,16 +102,17 @@ router.patch("/:id", verificaToken, async (req, res) => {
   if (!resposta) return res.status(400).json({ erro: "Informe a resposta deste pedido." });
 
   try {
-    // Atualiza a resposta do pedido
-    const pedido = await prisma.pedido.update({
+    
+    await prisma.pedido.update({
       where: { id: Number(id) },
       data: { resposta }
     });
 
+    
     const dados = await prisma.pedido.findUnique({
       where: { id: Number(id) },
-      include: {
-       adotante: {
+      include: {        
+        adotante: {
           select: {
             id: true,
             nome: true,
@@ -116,7 +120,7 @@ router.patch("/:id", verificaToken, async (req, res) => {
             fone: true
           }
         },
-        animal: { include: { especie: true, fotos: true } } // ✅ incluir fotos
+        animal: { include: { especie: true, fotos: true } }
       }
     });
 
@@ -126,11 +130,10 @@ router.patch("/:id", verificaToken, async (req, res) => {
       ? `Parabéns! Seu pedido foi aprovado. Você agora é o responsável pelo animal ${dados.animal.nome}.`
       : "Infelizmente seu pedido de adoção foi recusado.";
 
-    // Envia e-mail com a resposta
     await enviaEmail(dados.adotante.nome, dados.adotante.email, dados.descricao, mensagem);
 
     if (aprovado) {
-      // 1️⃣ Cria registro na tabela de adoções
+      //  Cria registro na tabela de adoções
       const novaAdocao = await prisma.adocao.create({
         data: {
           pedido: { connect: { id: Number(dados.id) } },
@@ -140,7 +143,7 @@ router.patch("/:id", verificaToken, async (req, res) => {
         }
       });
 
-      // 2️⃣ Cria o primeiro acompanhamento automático
+      //  Cria o primeiro acompanhamento automático
       await prisma.acompanhamento.create({
         data: {
           adocaoId: novaAdocao.id,
@@ -150,13 +153,13 @@ router.patch("/:id", verificaToken, async (req, res) => {
         }
       });
 
-      // 3️⃣ Marca animal como indisponível
+      //  Marca animal como indisponível
       await prisma.animal.update({
         where: { id: Number(dados.animal.id) },
         data: { disponivel: false }
       });
 
-      // 4️⃣ Rejeita automaticamente os outros pedidos do mesmo animal
+      //  Rejeita automaticamente os outros pedidos do mesmo animal
       await prisma.pedido.updateMany({
         where: {
           animalId: Number(dados.animal.id),
@@ -169,13 +172,14 @@ router.patch("/:id", verificaToken, async (req, res) => {
       });
     }
 
-    res.status(200).json(pedido);
+    // Retorna os dados atualizados
+    res.status(200).json(dados);
   } catch (error) {
     res.status(400).json(error);
   }
 });
 
-// ✅ Listar pedidos (opcionalmente por adotante)
+// ✅ Listar pedidos
 router.get("/", async (req, res) => {
   try {
     const { adotanteId } = req.query;
@@ -183,9 +187,17 @@ router.get("/", async (req, res) => {
     const pedidos = await prisma.pedido.findMany({
       where: { adotanteId: adotanteId ? String(adotanteId) : undefined },
       include: {
-        adotante: true,
+        // 🔒 SEGURANÇA: Selecionando apenas campos públicos na listagem também
+        adotante: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+            fone: true
+          }
+        },
         animal: {
-          include: { especie: true, fotos: true } // ✅ fotos e espécie
+          include: { especie: true, fotos: true }
         }
       }
     });
