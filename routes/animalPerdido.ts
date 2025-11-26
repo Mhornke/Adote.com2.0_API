@@ -50,15 +50,16 @@ router.post("/", verificaToken, async (req: any, res) => {
     localizacao,
     contato,
     especieId,
-    dataEncontrado
+    dataEncontrado,
+    fotos  
   } = req.body;
 
-  const adotanteId = req.user?.id; // assumindo que o token adiciona req.user.id
+  const adotanteId = req.userLogadoId;
 
   if (!descricao) {
     return res.status(400).json({ erro: "Nome e tipoAnuncio são obrigatórios" });
   }
-
+ const dataConvertida = dataEncontrado ? ConverteData(dataEncontrado) : null;
   try {
     const novo = await prisma.animalPerdido.create({
       data: {
@@ -67,7 +68,7 @@ router.post("/", verificaToken, async (req: any, res) => {
         tipoAnuncio,
         localizacao,
         contato,
-       dataEncontrado: dataEncontrado ? new Date(dataEncontrado) : null,
+       dataEncontrado: dataConvertida,
         adotanteId,
         especieId: especieId ? Number(especieId) : null,
       },
@@ -107,7 +108,7 @@ router.patch("/:id", verificaToken, async (req, res) => {
     encontrado,
     especieId,
   } = req.body;
-
+  const adotanteId = req.userLogadoId;
   try {
     const atualizado = await prisma.animalPerdido.update({
       where: { id: Number(id) },
@@ -137,6 +138,7 @@ router.patch("/:id", verificaToken, async (req, res) => {
 // DELETE /animalPerdido/:id
 router.delete("/:id", verificaToken, async (req, res) => {
   const { id } = req.params;
+    const adotanteId = req.userLogadoId;
   try {
     await prisma.foto.deleteMany({ where: { animalPerdidoId: Number(id) } });
     const excluido = await prisma.animalPerdido.delete({ where: { id: Number(id) } });
