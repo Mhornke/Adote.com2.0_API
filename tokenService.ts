@@ -8,8 +8,8 @@ interface UserPayload {
 // Adicionamos o parâmetro 'manterConectado' com valor padrão false
 export function gerarTokenAdotante(usuario: UserPayload, manterConectado: boolean = false): string {
   
-  if (!process.env.JWT_SECRET) {
-    throw new Error("A variável de ambiente JWT_SECRET não está definida!");
+  if (!process.env.JWT_KEY) {
+    throw new Error("A variável de ambiente JWT_KEY não está definida!");
   }
 
   const payload = {
