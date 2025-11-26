@@ -10,7 +10,7 @@ const router = Router();
  * 📌 GET /mensagem/chats
  * Lista os chats onde o usuário está participando
  */
-router.get("/chats", verificaToken, async (req: any, res) => {
+router.get("/chats", verificaToken, async (req, res) => {
   const userId = String(req.userLogadoId);
 
   try {
@@ -65,6 +65,7 @@ router.get("/:chatId", verificaToken, async (req, res) => {
  * Envia mensagem dentro de um chat
  */
 router.post("/", verificaToken, async (req: any, res) => {
+  
   try {
 
     const remetenteId = String(req.userLogadoId);
