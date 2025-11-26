@@ -108,7 +108,14 @@ router.patch("/:id", verificaToken, async (req, res) => {
     const dados = await prisma.pedido.findUnique({
       where: { id: Number(id) },
       include: {
-        adotante: true,
+       adotante: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+            fone: true
+          }
+        },
         animal: { include: { especie: true, fotos: true } } // ✅ incluir fotos
       }
     });
