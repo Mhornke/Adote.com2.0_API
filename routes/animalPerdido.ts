@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { Router } from "express";
 import { verificaToken } from "../middewares/verificaToken";
 
+
 const prisma = new PrismaClient();
 const router = Router();
 
@@ -40,6 +41,10 @@ router.get("/:id", async (req, res) => {
     res.status(400).json({ erro: "Erro ao buscar animal", detalhes: error });
   }
 });
+function parseDataBR(str: string) {
+  const [dia, mes, ano] = str.split("/").map(Number);
+  return new Date(ano, mes - 1, dia);
+}
 
 // POST /animalPerdido
 router.post("/", verificaToken, async (req: any, res) => {
@@ -59,7 +64,7 @@ router.post("/", verificaToken, async (req: any, res) => {
   if (!descricao) {
     return res.status(400).json({ erro: "Nome e tipoAnuncio são obrigatórios" });
   }
- const dataConvertida = dataEncontrado ? ConverteData(dataEncontrado) : null;
+  
   try {
     const novo = await prisma.animalPerdido.create({
       data: {
@@ -68,7 +73,7 @@ router.post("/", verificaToken, async (req: any, res) => {
         tipoAnuncio,
         localizacao,
         contato,
-       dataEncontrado: dataConvertida,
+        dataEncontrado: dataEncontrado ? parseDataBR(dataEncontrado): null,
         adotanteId,
         especieId: especieId ? Number(especieId) : null,
       },
