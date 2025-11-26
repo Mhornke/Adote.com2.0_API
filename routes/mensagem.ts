@@ -22,7 +22,7 @@ router.get("/chats", verificaToken, async (req: any, res) => {
          
         ]
       },
-      orderBy: { dataEnvio : "asc" },
+      orderBy: { updatedAt : "asc" },
       include: {
         animal: true,
         mensagens: {
