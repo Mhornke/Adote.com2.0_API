@@ -39,7 +39,12 @@ router.post("/", async (req, res) => {
     const pedido = await prisma.pedido.create({
       data: { adotanteId, animalId, descricao },
       include: {
-        adotante: true,
+        adotante: {
+           id: true,
+          nome: true,
+          fone: true,
+          email:true,
+        },
         animal: {
           include: { especie: true, fotos: true } // ✅ incluir fotos e espécie
         }
@@ -59,7 +64,33 @@ router.post("/", async (req, res) => {
     res.status(400).json(error);
   }
 });
+// ✅ Verificar se usuário já enviou pedido para um animal específico
+router.get("/verificar", async (req, res) => {
+  const { adotanteId, animalId } = req.query;
 
+  if (!adotanteId || !animalId) {
+    return res.status(400).json({ erro: "Informe adotanteId e animalId" });
+  }
+
+  try {
+    // Busca se existe algum pedido com esses dois IDs
+    const pedidoExistente = await prisma.pedido.findFirst({
+      where: {
+        adotanteId: String(adotanteId),
+        animalId: Number(animalId)
+      }
+    });
+
+    // Retorna um objeto com um booleano
+    res.status(200).json({ 
+      jaEnviado: !!pedidoExistente, // Converte para true se existir, false se for null
+      pedido: pedidoExistente // Opcional: devolve o pedido caso queira mostrar o status atual
+    });
+
+  } catch (error) {
+    res.status(500).json({ erro: "Erro ao verificar status do pedido", detalhes: error });
+  }
+});
 // ✅ Aprovar ou rejeitar pedido e criar adoção + acompanhamento se aprovado
 router.patch("/:id", verificaToken, async (req, res) => {
   const { id } = req.params;
