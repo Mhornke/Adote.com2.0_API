@@ -23,7 +23,44 @@ router.get("/", async (req, res) => {
     res.status(400).json({ erro: "Erro ao listar animais perdidos", detalhes: error });
   }
 });
+// 📌 GET /animais-perdidos/meus-animais
+router.get("/meus-animais", verificaToken, async (req: any, res) => {
+  const usuarioId = req.userLogadoId; 
 
+  try {
+    const meusAnimais = await prisma.animalPerdido.findMany({
+      where: {
+        adotanteId: String(usuarioId) 
+      },
+      include: {
+        fotos: true,       
+        especie: { 
+            select: { nome: true } 
+        }, 
+
+        
+        chats: {
+          include: {
+           
+            participante1: { select: { nome: true, id: true } },
+            participante2: { select: { nome: true, id: true } },
+
+          
+            mensagens: {
+                orderBy: { dataEnvio: 'asc' }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+
+    res.status(200).json(meusAnimais);
+  } catch (error) {
+    console.error("Erro ao buscar animais:", error);
+    res.status(500).json({ erro: "Erro interno ao buscar dados." });
+  }
+});
 // GET /animalPerdido/:id
 router.get("/:id", async (req, res) => {
   try {
