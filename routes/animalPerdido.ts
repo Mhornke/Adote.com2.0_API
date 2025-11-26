@@ -50,7 +50,7 @@ router.post("/", verificaToken, async (req: any, res) => {
     localizacao,
     contato,
     especieId,
-    fotos,
+    dataEncontrado
   } = req.body;
 
   const adotanteId = req.user?.id; // assumindo que o token adiciona req.user.id
@@ -67,6 +67,7 @@ router.post("/", verificaToken, async (req: any, res) => {
         tipoAnuncio,
         localizacao,
         contato,
+       dataEncontrado: dataEncontrado ? new Date(dataEncontrado) : null,
         adotanteId,
         especieId: especieId ? Number(especieId) : null,
       },
