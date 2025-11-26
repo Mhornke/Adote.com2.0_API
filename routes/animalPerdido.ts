@@ -50,8 +50,8 @@ router.post("/", verificaToken, async (req: any, res) => {
     localizacao,
     contato,
     especieId,
-    dataEncontrado,
-    fotos  
+    dataEncontrado
+     
   } = req.body;
 
   const adotanteId = req.userLogadoId;
@@ -72,24 +72,8 @@ router.post("/", verificaToken, async (req: any, res) => {
         adotanteId,
         especieId: especieId ? Number(especieId) : null,
       },
-    });
-
-    // Cadastrar fotos se houver
-    if (Array.isArray(fotos) && fotos.length > 0) {
-      const fotosData = fotos.map((f: any) => ({
-        descricao: f.descricao ?? "",
-        codigoFoto: f.codigoFoto,
-        animalPerdidoId: novo.id,
-      }));
-      await prisma.foto.createMany({ data: fotosData });
-    }
-
-    const novoComFotos = await prisma.animalPerdido.findUnique({
-      where: { id: novo.id },
-      include: { fotos: true, adotante: true, especie: true },
-    });
-
-    res.status(201).json(novoComFotos);
+    }); 
+    res.status(201).json(novo);
   } catch (error) {
     console.error(error);
     res.status(400).json({ erro: "Erro ao criar anúncio", detalhes: error });
