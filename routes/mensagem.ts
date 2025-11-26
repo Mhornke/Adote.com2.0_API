@@ -22,11 +22,11 @@ router.get("/chats", verificaToken, async (req: any, res) => {
          
         ]
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: { dataEnvio : "asc" },
       include: {
         animal: true,
         mensagens: {
-          orderBy: { createdAt: "asc" }
+          orderBy: { dataEnvio : "asc" }
         }
       }
     });
@@ -49,7 +49,7 @@ router.get("/:chatId", verificaToken, async (req, res) => {
 
     const mensagens = await prisma.mensagem.findMany({
       where: { chatId },
-      orderBy: { createdAt: "asc" }
+      orderBy: { dataEnvio : "asc" }
     });
 
     return res.status(200).json(mensagens);
