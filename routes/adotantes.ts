@@ -2,12 +2,17 @@ import { PrismaClient } from "@prisma/client";
 import { Router } from "express";
 import bcrypt from 'bcrypt';
 import { gerarTokenAdotante } from "../tokenService";
-
+import { verificaToken } from "../middewares/verificaToken";
 import nodemailer from 'nodemailer'; // Importando nodemailer
 import crypto from 'crypto'; // Para gerar um código aleatório
 
 const prisma = new PrismaClient();
 const router = Router();
+
+router.get("/validar-token", verificaToken, (req, res) => {
+  
+  res.status(200).json({ valido: true });
+});
 
 router.get("/", async (req, res) => {
   try {
