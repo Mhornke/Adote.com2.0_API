@@ -65,7 +65,7 @@ model AnimalPerdido {
   localizacao    String? // Bairro, rua ou ponto de referência
   contato        String? // Telefone ou e-mail de quem publicou
   encontrado     Boolean     @default(false)
-  dataEncontrado DateTime? // Quando foi marcado como encontrado
+  dataEncontrado String? // Retirei o date e alterei pra string, ta dando muita dor de cabeça
   fotos          Foto[]      @relation("FotoAnimalPerdido")
   adotante       Adotante?   @relation(fields: [adotanteId], references: [id])
   adotanteId     String?
