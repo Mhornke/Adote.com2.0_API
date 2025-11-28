@@ -9,14 +9,28 @@ const router = Router();
 // GET /vacinasAplicadas
 router.get("/", verificaToken, async (req, res) => {
   try {
+    const { adocaoId, animalId } = req.query;
+
     const vacinasAplicadas = await prisma.vacinasAplicadas.findMany({
-      include: { animal: true, acompanhamento: true }
+      where: adocaoId
+        ? { acompanhamento: { adocaoId: Number(adocaoId) } }
+        : animalId
+        ? { animalId: Number(animalId) }
+        : {}, // sem filtro = retorna tudo
+
+      include: {
+        animal: true,
+        acompanhamento: true
+      }
     });
+
     res.status(200).json(vacinasAplicadas);
   } catch (error) {
+    console.error(error);
     res.status(400).json(error);
   }
 });
+
 
 // GET /vacinasAplicadas/:id
 router.get("/:id", verificaToken, async (req, res) => {
