@@ -36,7 +36,7 @@ router.get("/adotados", async (req, res) => {
   }
 });
 
-// POST /animais - criar animal (opcional: enviar `fotos` array para criar fotos após criar animal)
+// POST /animais - criar animal
 router.post("/", verificaToken, async (req, res) => {
   const { nome, idade, sexo, descricao, porte, especieId, castracao, fotos } = req.body;
 
@@ -45,7 +45,6 @@ router.post("/", verificaToken, async (req, res) => {
   }
 
   try {
-    // cria animal
     const animal = await prisma.animal.create({
       data: {
         nome,
@@ -58,7 +57,6 @@ router.post("/", verificaToken, async (req, res) => {
       }
     });
 
-    // se vier fotos (array de { codigoFoto, descricao }), cria-las vinculadas
     if (Array.isArray(fotos) && fotos.length > 0) {
       const fotosData = fotos.map((f: any) => ({
         descricao: f.descricao ?? "",
@@ -66,7 +64,7 @@ router.post("/", verificaToken, async (req, res) => {
         animalId: animal.id
       }));
       await prisma.foto.createMany({ data: fotosData });
-      // recarrega animal com fotos
+
       const animalComFotos = await prisma.animal.findUnique({
         where: { id: animal.id },
         include: { especie: true, fotos: true }
@@ -89,7 +87,6 @@ router.post("/", verificaToken, async (req, res) => {
 router.delete("/:id", verificaToken, async (req, res) => {
   const { id } = req.params;
   try {
-    // antes de deletar, podemos optar por deletar fotos vinculadas
     await prisma.foto.deleteMany({ where: { animalId: Number(id) }});
     const animal = await prisma.animal.delete({
       where: { id: Number(id) },
@@ -100,7 +97,7 @@ router.delete("/:id", verificaToken, async (req, res) => {
   }
 });
 
-// PUT /animais/:id - atualiza (se enviar fotos, substitui adicionando novas fotos; não remove automaticamente existentes)
+// PUT /animais/:id - atualizar
 router.put("/:id", verificaToken, async (req, res) => {
   const { id } = req.params;
   const { nome, idade, sexo, descricao, porte, especieId, castracao, fotos } = req.body;
@@ -123,7 +120,6 @@ router.put("/:id", verificaToken, async (req, res) => {
       }
     });
 
-    // se vier fotos para adicionar
     if (Array.isArray(fotos) && fotos.length > 0) {
       const fotosData = fotos.map((f: any) => ({
         descricao: f.descricao ?? "",
@@ -144,7 +140,7 @@ router.put("/:id", verificaToken, async (req, res) => {
   }
 });
 
-// GET /animais/pesquisa/:termo - mantém implementação adaptada (inclui fotos)
+// GET /animais/pesquisa/:termo
 router.get("/pesquisa/:termo", async (req, res) => {
   const { termo } = req.params;
   const termoNumero = Number(termo);
@@ -154,7 +150,6 @@ router.get("/pesquisa/:termo", async (req, res) => {
       let termoCorrigido: string | undefined;
       if (termo.toLowerCase() === 'macho') termoCorrigido = 'Macho';
       else if (termo.toLowerCase() === 'femea' || termo.toLowerCase() === 'fêmea') termoCorrigido = 'Femea';
-      else termoCorrigido = undefined;
 
       const animais = await prisma.animal.findMany({
         include: { especie: true, fotos: true },
@@ -166,6 +161,7 @@ router.get("/pesquisa/:termo", async (req, res) => {
           ]
         }
       });
+
       res.status(200).json(animais);
     } catch (error) {
       res.status(400).json(error);
@@ -183,7 +179,7 @@ router.get("/pesquisa/:termo", async (req, res) => {
   }
 });
 
-// GET /animais/:id - inclui fotos
+// GET /animais/:id
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
@@ -197,7 +193,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// PATCH /animais/:id - atualizar parcial (ex: disponivel)
+// PATCH /animais/:id — SOMENTE disponivel/castracao
 router.patch("/:id", verificaToken, async (req, res) => {
   const { id } = req.params;
   const updateData: any = {};
@@ -211,10 +207,28 @@ router.patch("/:id", verificaToken, async (req, res) => {
   }
 
   try {
+    // 🔍 Verificar se existe adoção vinculada
+    const adocaoVinculada = await prisma.adocao.findFirst({
+      where: { animalId: Number(id) },
+      select: { status: true }
+    });
+
+    // ❌ Bloqueia se tentar alterar `disponivel` e existir adoção ativa/concluída
+    if (updateData.disponivel !== undefined) {
+      if (adocaoVinculada &&
+         (adocaoVinculada.status === "Ativa" || adocaoVinculada.status === "Concluida")) 
+      {
+        return res.status(403).json({
+          erro: `Este animal não pode ser marcado como disponível, pois possui uma adoção ${adocaoVinculada.status}.`
+        });
+      }
+    }
+
     const animalAtualizado = await prisma.animal.update({
       where: { id: Number(id) },
       data: updateData,
     });
+
     res.status(200).json(animalAtualizado);
   } catch (error) {
     res.status(400).json({ erro: "Não foi possível atualizar o animal.", detalhes: error });
