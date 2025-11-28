@@ -1,5 +1,7 @@
+import { PrismaClient } from "@prisma/client";
 import { Router } from "express";
-import prisma from "../prisma"; // verifique se o caminho do seu prisma client está correto
+
+const prisma = new PrismaClient();
 const router = Router();
 
 // Rota para animais encontrados/adotados
