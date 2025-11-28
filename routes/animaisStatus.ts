@@ -5,7 +5,7 @@ import { prisma } from "../prisma";
 const router = Router();
 
 // GET /animais/status
-router.get("/", async (req, res) => {
+router.get("/", async (req: any, res) => {
   try {
    const encontrados = await prisma.animalPerdido.findMany({
   where: { encontrado: true },
