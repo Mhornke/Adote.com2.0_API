@@ -112,15 +112,16 @@ router.post("/", verificaToken, async (req: any, res) => {
       });
     }
 
-    // Cria mensagem
-    const mensagem = await prisma.mensagem.create({
-      data: {
-        conteudo,
-        remetenteId,
-        destinatarioId,
-        chatId: chat.id,
-      },
-    });
+const mensagem = await prisma.mensagem.create({
+  data: {
+    conteudo,
+    remetenteId,
+    destinatarioId,
+    animalId, 
+    chatId: chat.id,
+  },
+});
+
 
     return res.status(201).json(mensagem);
   } catch (error) {
