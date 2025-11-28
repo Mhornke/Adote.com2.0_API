@@ -83,7 +83,7 @@ function parseDataBR(str: string) {
   return new Date(ano, mes - 1, dia);
 }
 
-// POST /animalPerdido
+
 router.post("/", verificaToken, async (req: any, res) => {
   const {
     nome,
@@ -92,16 +92,23 @@ router.post("/", verificaToken, async (req: any, res) => {
     localizacao,
     contato,
     especieId,
-    dataEncontrado
-     
+    dataEncontrado,
+ 
+    adotanteId: adotanteIdBody 
   } = req.body;
 
-  const adotanteId = req.userLogadoId;
+ 
+  const adotanteIdFinal = req.userLogadoId || adotanteIdBody;
 
-  if (!descricao) {
-    return res.status(400).json({ erro: "Nome e tipoAnuncio são obrigatórios" });
+
+  if (!adotanteIdFinal) {
+    return res.status(401).json({ erro: "Usuário não identificado. ID do adotante é obrigatório." });
   }
-  
+
+  if (!nome || !tipoAnuncio || !descricao) {
+    return res.status(400).json({ erro: "Nome, Tipo de Anúncio e Descrição são obrigatórios." });
+  }
+   
   try {
     const novo = await prisma.animalPerdido.create({
       data: {
@@ -111,18 +118,21 @@ router.post("/", verificaToken, async (req: any, res) => {
         localizacao,
         contato,
         dataEncontrado: dataEncontrado ? parseDataBR(dataEncontrado): null,
-        adotanteId,
+        // Usa o ID garantido
+        adotanteId: String(adotanteIdFinal), 
         especieId: especieId ? Number(especieId) : null,
       },
     }); 
+    
+    console.log("Animal criado com sucesso. Dono:", adotanteIdFinal); // Log para confirmar
     res.status(201).json(novo);
+
   } catch (error) {
-    console.error(error);
+    console.error("Erro no CREATE Animal:", error);
     res.status(400).json({ erro: "Erro ao criar anúncio", detalhes: error });
   }
 });
 
-// PATCH /animalPerdido/:id - atualizar (ex: marcar encontrado)
 router.patch("/:id", verificaToken, async (req, res) => {
   const { id } = req.params;
   const {
