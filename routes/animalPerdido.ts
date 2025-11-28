@@ -78,11 +78,6 @@ router.get("/:id", async (req, res) => {
     res.status(400).json({ erro: "Erro ao buscar animal", detalhes: error });
   }
 });
-function parseDataBR(str: string) {
-  const [dia, mes, ano] = str.split("/").map(Number);
-  return new Date(ano, mes - 1, dia);
-}
-
 
 router.post("/", verificaToken, async (req: any, res) => {
   const {
@@ -117,7 +112,7 @@ router.post("/", verificaToken, async (req: any, res) => {
         tipoAnuncio,
         localizacao,
         contato,
-        dataEncontrado: dataEncontrado ? parseDataBR(dataEncontrado): null,
+        dataEncontrado: dataEncontrado,
         // Usa o ID garantido
         adotanteId: String(adotanteIdFinal), 
         especieId: especieId ? Number(especieId) : null,
