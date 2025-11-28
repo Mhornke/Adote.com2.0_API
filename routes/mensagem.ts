@@ -5,19 +5,13 @@ import { Router } from "express";
 const prisma = new PrismaClient();
 const router = Router();
 
-// ID Fixo para testes (Simula o usuário logado)
-// Você deve passar este ID via Body ou Query nas rotas que precisam.
-// Vamos usar um ID de teste para fins didáticos.
+
 const USER_ID_TESTE = "32697fec-8100-47ef-9e6e-6aa77f7f6f08"; 
 
-/**
- * 📌 GET /mensagem/chats
- * Lista os chats onde o usuário está participando
- * Requer: ?userId=ID_DO_USUARIO_PARA_TESTE
- */
+
 router.get("/chats", async (req, res) => {
-  // SIMULAÇÃO: Pega o userId do query parameter para teste
-  const userId = String(req.query.userId || USER_ID_TESTE); // Usamos o ID fixo se não for passado
+
+  const userId = String(req.query.userId || USER_ID_TESTE);
 
   try {
     const chats = await prisma.chat.findMany({
@@ -43,15 +37,10 @@ router.get("/chats", async (req, res) => {
   }
 });
 
-// --- Nova Rota para buscar um CHAT específico (Para corrigir o front-end) ---
-/**
- * 📌 GET /mensagem/chat/:chatId
- * Retorna o objeto Chat completo pelo ID.
- * Requer: ?userId=ID_DO_USUARIO_PARA_TESTE
- */
+
 router.get("/chat/:chatId", async (req, res) => {
     const { chatId } = req.params;
-    // SIMULAÇÃO: Pega o userId do query parameter para teste
+
     const userId = String(req.query.userId || USER_ID_TESTE); 
 
     try {
@@ -69,9 +58,9 @@ router.get("/chat/:chatId", async (req, res) => {
             return res.status(404).json({ erro: "Chat não encontrado." });
         }
 
-        // Validação de acesso (Mantida para fins de lógica, mas fraca sem token)
+      
         if (chat.participante1Id !== userId && chat.participante2Id !== userId) {
-             // Removido o 403 para não atrapalhar o debug, mas mantido o log
+           
              console.log(`AVISO: Usuário ${userId} tentando acessar chat que não pertence a ele.`);
         }
 
@@ -84,10 +73,7 @@ router.get("/chat/:chatId", async (req, res) => {
 // ----------------------------------------------------------------------------
 
 
-/**
- * 📌 GET /mensagem/:chatId
- * Retorna todas as mensagens de um chat
- */
+
 router.get("/:chatId", async (req, res) => {
   try {
     const { chatId } = req.params;
@@ -105,14 +91,10 @@ router.get("/:chatId", async (req, res) => {
 });
 
 
-/**
- * 📌 POST /mensagem
- * Envia mensagem dentro de um chat
- * Requer: remetenteId no body para teste
- */
+
 router.post("/", async (req: any, res) => {
   try {
-    // SIMULAÇÃO: remetenteId é passado no body, pois não há token
+    
     const remetenteId = String(req.body.remetenteId || USER_ID_TESTE); 
 
     const { animalId, destinatarioId, conteudo } = req.body;
@@ -151,7 +133,7 @@ router.post("/", async (req: any, res) => {
     const mensagem = await prisma.mensagem.create({
       data: {
         conteudo,
-        remetenteId, // Usa o ID simulado
+        remetenteId, 
         destinatarioId,
         animalId,
         chatId: chat.id
@@ -166,13 +148,9 @@ router.post("/", async (req: any, res) => {
 });
 
 
-/**
- * 📌 PATCH /mensagem/chat/:chatId/lida
- * Marca TODAS as mensagens como lidas nesse chat
- * Requer: destinatarioId no body para teste
- */
+
 router.patch("/chat/:chatId/lida", async (req: any, res) => {
-  // SIMULAÇÃO: userId é o destinatario, passado no body
+  
   const userId = String(req.body.userId || USER_ID_TESTE); 
   const { chatId } = req.params;
 
@@ -194,19 +172,47 @@ router.patch("/chat/:chatId/lida", async (req: any, res) => {
 });
 
 
-/**
- * 📌 GET /mensagem/nao-lidas
- * Retorna número total de mensagens não lidas
- * Requer: ?userId=ID_DO_USUARIO_PARA_TESTE
- */
+router.delete("/chat/:chatId", verificaToken, async (req: any, res) => {
+  const { chatId } = req.params;
+  const userId = req.userLogadoId;
+
+  try {
+    
+    const chat = await prisma.chat.findUnique({
+      where: { id: chatId },
+    });
+
+    if (!chat) return res.status(404).json({ erro: "Chat não encontrado." });
+
+    if (chat.participante1Id !== String(userId) && chat.participante2Id !== String(userId)) {
+      return res.status(403).json({ erro: "Sem permissão para deletar este chat." });
+    }
+
+    // 2. Transação: Deleta as mensagens primeiro, depois o chat
+    await prisma.$transaction([
+      prisma.mensagem.deleteMany({
+        where: { chatId: chatId },
+      }),
+      prisma.chat.delete({
+        where: { id: chatId },
+      }),
+    ]);
+
+    res.status(200).json({ mensagem: "Chat e mensagens excluídos com sucesso." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ erro: "Erro ao deletar chat." });
+  }
+});
+
 router.get("/nao-lidas", async (req: any, res) => {
-  // SIMULAÇÃO: Pega o userId do query parameter para teste
+ 
   const userId = String(req.query.userId || USER_ID_TESTE);
 
   try {
     const count = await prisma.mensagem.count({
       where: {
-        destinatarioId: userId, // Usa o ID simulado
+        destinatarioId: userId, 
         lida: false
       }
     });
