@@ -10,8 +10,8 @@ const router = Router();
  * 📌 GET /mensagem/chats
  * Lista os chats onde o usuário está participando
  */
-router.get("/chats", verificaToken, async (req, res) => {
-  const userId = String(req.userLogadoId);
+router.get("/chats",  async (req, res) => {
+  c
 
   try {
     const chats = await prisma.chat.findMany({
@@ -43,9 +43,9 @@ router.get("/chats", verificaToken, async (req, res) => {
  * 📌 GET /mensagem/:chatId
  * Retorna todas as mensagens de um chat
  */
-router.get("/:chatId", verificaToken, async (req, res) => {
+router.get("/:chatId",  async (req, res) => {
   try {
-    const { chatId } = req.params;
+    
 
     const mensagens = await prisma.mensagem.findMany({
       where: { chatId },
@@ -64,11 +64,11 @@ router.get("/:chatId", verificaToken, async (req, res) => {
  * 📌 POST /mensagem
  * Envia mensagem dentro de um chat
  */
-router.post("/", verificaToken, async (req: any, res) => {
+router.post("/",  async (req: any, res) => {
   
   try {
 
-    const remetenteId = String(req.userLogadoId);
+    
     const { animalId, destinatarioId, conteudo } = req.body;
     
     if (!conteudo || !animalId || !destinatarioId ) {
@@ -119,8 +119,8 @@ router.post("/", verificaToken, async (req: any, res) => {
  * 📌 PATCH /mensagem/chat/:chatId/lida
  * Marca TODAS as mensagens como lidas nesse chat
  */
-router.patch("/chat/:chatId/lida", verificaToken, async (req: any, res) => {
-  const userId = String(req.userLogadoId);
+router.patch("/chat/:chatId/lida",  async (req: any, res) => {
+  
   const { chatId } = req.params;
 
   try {
@@ -145,9 +145,8 @@ router.patch("/chat/:chatId/lida", verificaToken, async (req: any, res) => {
  * 📌 GET /mensagem/nao-lidas
  * Retorna número total de mensagens não lidas
  */
-router.get("/nao-lidas", verificaToken, async (req: any, res) => {
-  const userId = String(req.userLogadoId);
-
+router.get("/nao-lidas",  async (req: any, res) => {
+  
   try {
     const count = await prisma.mensagem.count({
       where: {
