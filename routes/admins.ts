@@ -116,8 +116,12 @@ router.post("/login", async (req, res) => {
       return res.status(403).json({ erro: "Administrador inativo. Contate o responsável do sistema." })
     }
 
-    // Validar senha
+    // Verifica senha correta
     if (bcrypt.compareSync(senha, admin.senha)) {
+
+      // 👇 NOVO: verificar se a senha é a senha padrão
+      const usandoSenhaPadrao = bcrypt.compareSync("@12345", admin.senha);
+
       const token = jwt.sign(
         {
           admin_logado_id: admin.id,
@@ -132,7 +136,8 @@ router.post("/login", async (req, res) => {
         id: admin.id,
         nome: admin.nome,
         role: admin.role,
-        token
+        token,
+        senhaPadrao: usandoSenhaPadrao  // 👈 AGORA O FRONT SABE SE PRECISA FORÇAR TROCA
       })
     }
 
@@ -143,6 +148,7 @@ router.post("/login", async (req, res) => {
     return res.status(500).json({ erro: "Erro interno do servidor", detalhe: error.message })
   }
 })
+
 
 // Atualizar admin
 router.patch("/:id", verificaToken, async (req, res) => {
