@@ -27,7 +27,7 @@ router.get("/:id", async (req, res) => {
   try {
     const foto = await prisma.foto.findUnique({
       where: { id: Number(req.params.id) },
-      include: { animalNormal: true, animalPerdido: true }
+      include: { animalNormal: true, animalPerdido: true, postComunidade:true }
     });
     res.status(200).json(foto);
   } catch (error) {
@@ -37,7 +37,7 @@ router.get("/:id", async (req, res) => {
 
 // POST /fotos (protected)
 router.post("/", verificaToken, async (req, res) => {
-  const { descricao, codigoFoto, animalId, animalPerdidoId } = req.body;
+  const { descricao, codigoFoto, animalId, animalPerdidoId, postComunidadeId } = req.body;
   if (!codigoFoto) return res.status(400).json({ erro: "Informe codigoFoto" });
 
   if (!animalId && !animalPerdidoId) {
@@ -51,7 +51,8 @@ router.post("/", verificaToken, async (req, res) => {
         codigoFoto,
         animalId: animalId ? Number(animalId) : undefined,
         animalPerdidoId: animalPerdidoId ? Number(animalPerdidoId) : undefined,
-        postComunidadeId: postComunidadeId ? Number(postComunidadeId) : undefined
+        postComunidadeId: postComunidadeId ? Number(postComunidadeId) : undefined,
+       
       }
     });
     res.status(201).json(foto);
@@ -110,4 +111,5 @@ router.delete("/:id", verificaToken, async (req, res) => {
 });
 
 export default router;
+
 
