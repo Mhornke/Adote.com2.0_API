@@ -120,7 +120,7 @@ router.post("/login", async (req, res) => {
     if (bcrypt.compareSync(senha, admin.senha)) {
 
       // 👇 NOVO: verificar se a senha é a senha padrão
-      const usandoSenhaPadrao = bcrypt.compareSync("@12345", admin.senha);
+      const usandoSenhaPadrao = bcrypt.compareSync("@Senha12345", admin.senha);
 
       const token = jwt.sign(
         {
