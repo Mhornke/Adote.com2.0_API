@@ -139,35 +139,35 @@ router.patch("/:id", verificaToken, async (req, res) => {
     res.status(400).json(error);
   }
 });
-// Rota específica para CURTIR (PATCH /posts-comunidade/:id/curtir)
+// Backend (Node.js/Prisma)
 router.patch("/:id/curtir", verificaToken, async (req, res) => {
   const postId = Number(req.params.id);
-  const { tipo } = req.body; // Recebe "add" ou "remove"
+  const { tipo } = req.body; // "add" ou "remove"
 
   try {
-    // Verifica se o post existe
-    const post = await prisma.postComunidade.findUnique({
-       where: { id: postId } 
-    });
+    // 1. Defina a operação baseada no tipo
+    let operacaoCurtida;
+    
+    if (tipo === 'add') {
+      operacaoCurtida = { increment: 1 };
+    } else if (tipo === 'remove') {
+      operacaoCurtida = { decrement: 1 };
+    } else {
+      return res.status(400).json({ erro: "Tipo de operação inválida" });
+    }
 
-    if (!post) return res.status(404).json({ erro: "Post não encontrado" });
-
-    // Atualiza usando increment/decrement (atômico e seguro)
+    // 2. Atualiza
     const atualizado = await prisma.postComunidade.update({
       where: { id: postId },
       data: {
-        curtida: {
-          // Se tipo for "add", soma 1. Se for remover, subtrai 1.
-          increment: tipo === "add" ? 1 : 0,
-          decrement: tipo === "remove" ? 1 : 0
-        }
+        curtida: operacaoCurtida // Passa apenas o objeto correto
       }
     });
 
     res.status(200).json(atualizado);
   } catch (error) {
-    console.log(error);
-    res.status(400).json(error);
+    console.error("Erro no backend:", error); // Isso vai aparecer no terminal do servidor
+    res.status(400).json({ erro: "Falha ao atualizar curtida", detalhes: error });
   }
 });
 /* =====================================
