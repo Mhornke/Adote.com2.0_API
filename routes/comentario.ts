@@ -31,7 +31,36 @@ router.post("/", verificaToken, async (req, res) => {
   }
 });
 
+router.get("/", async (req, res) => {
+  try {
+    const posts = await prisma.postComunidade.findMany({
+      orderBy: { createdAt: "desc" }, 
+      include: {
+        
+        adotante: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+            
+          }
+        },
+       
+        fotos: true,
+        
+       
+        _count: {
+            select: { comentarios: true }
+        }
+      }
+    });
 
+    res.status(200).json(posts);
+  } catch (error) {
+    console.error("Erro ao buscar feed:", error);
+    res.status(500).json({ erro: "Erro ao buscar publicações." });
+  }
+});
 
 router.patch("/:id", verificaToken, async (req, res) => {
   const { texto, curtida } = req.body;
