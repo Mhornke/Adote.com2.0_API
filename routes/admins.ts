@@ -174,6 +174,39 @@ router.patch("/:id", verificaToken, async (req, res) => {
   } catch (error) {
     res.status(400).json(error)
   }
-})
+});
+// Excluir admin
+router.delete("/:id", verificaToken, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Verificar token
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ erro: "Token necessário" });
+
+    const decoded: any = jwt.verify(token, process.env.JWT_KEY as string);
+
+    // Apenas MASTER pode excluir admin
+    if (decoded.role !== "master") {
+      return res.status(403).json({ erro: "Apenas admins MASTER podem excluir outros admins" });
+    }
+
+    // Impedir que um admin delete sua própria conta
+    if (decoded.admin_logado_id == Number(id)) {
+      return res.status(400).json({ erro: "Você não pode excluir sua própria conta" });
+    }
+
+    await prisma.admin.delete({
+      where: { id: Number(id) }
+    });
+
+    return res.status(200).json({ mensagem: "Admin removido com sucesso" });
+
+  } catch (error) {
+    console.log("Erro ao deletar admin:", error);
+    return res.status(400).json({ erro: "Erro ao excluir admin", detalhe: error });
+  }
+});
+
 
 export default router
