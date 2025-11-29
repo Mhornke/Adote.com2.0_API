@@ -137,34 +137,48 @@ router.patch("/:id", verificaToken, async (req, res) => {
     res.status(400).json(error);
   }
 });
-
-// DELETE /comentario/:id
-router.delete("/comentario/:id", async (req, res) => {
-  //const adotanteId = req.userLogadoId;
-  const comentarioId = Number(req.params.id);
-
+//temporario
+router.delete("/comentarios/:id", async (req, res) => {
   try {
-    const comentario = await prisma.comentario.findUnique({
-      where: { id: comentarioId }
+    const id = Number(req.params.id);
+
+    await prisma.comentario.delete({
+      where: { id }
     });
 
-    if (!comentario) {
-      return res.status(404).json({ erro: "Comentário não encontrado" });
-    }
-
-   // if (comentario.adotanteId !== String(adotanteId)) {
-     // return res.status(403).json({ erro: "Você não pode excluir este comentário" });
-    //}
-
-    const excluido = await prisma.comentario.delete({
-      where: { id: comentarioId }
-    });
-
-    res.status(200).json(excluido);
+    res.json({ mensagem: "Comentário deletado." });
   } catch (error) {
-    res.status(400).json(error);
+    res.status(500).json({ erro: "Erro ao deletar comentário." });
   }
 });
+
+// DELETE /comentario/:id
+//router.delete("/comentario/:id", async (req, res) => {
+//  const adotanteId = req.userLogadoId;
+ // const comentarioId = Number(req.params.id);
+
+ // try {
+  //  const comentario = await prisma.comentario.findUnique({
+   //   where: { id: comentarioId }
+   // });
+
+   //if (!comentario) {
+    //  return res.status(404).json({ erro: "Comentário não encontrado" });
+   // }
+//
+  // if (comentario.adotanteId !== String(adotanteId)) {
+ ///  return res.status(403).json({ erro: "Você não pode excluir este comentário" });
+ // }
+
+  //  const excluido = await prisma.comentario.delete({
+  //    where: { id: comentarioId }
+  //  });
+
+//    res.status(200).json(excluido);
+////  } catch (error) {
+//    res.status(400).json(error);
+//  }
+//});
 // DELETE /post/:id
 router.delete("/poste/:id", verificaToken, async (req, res) => {
   const adotanteId = req.userLogadoId;
