@@ -40,7 +40,7 @@ router.post("/posts", async (req, res) => {
 });
 
 // POST /comentario
-router.post("/comentario-postComunidade", verificaToken, async (req, res) => {
+router.post("/comentario", verificaToken, async (req, res) => {
   const { texto, curtida, postComunidadeId } = req.body;
 
   const adotanteId = req.userLogadoId; 
