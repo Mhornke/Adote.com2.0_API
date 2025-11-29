@@ -6,78 +6,178 @@ import { verificaToken } from "../middewares/verificaToken";
 const prisma = new PrismaClient();
 const router = Router();
 
-// GET /postComunidade
+/* =====================================
+   LISTAR TODOS OS POSTS (FEED)
+   ===================================== */
 router.get("/", async (req, res) => {
   try {
     const posts = await prisma.postComunidade.findMany({
-      include: { comentarios: true, adotante: true },
-      orderBy: { createdAt: "desc" }
+      orderBy: { createdAt: "desc" },
+      include: {
+        adotante: {
+          select: { id: true, nome: true, email: true }
+        },
+        fotos: true,
+        comentarios: {
+          include: {
+            adotante: { select: { id: true, nome: true } }
+          },
+          orderBy: { createdAt: "desc" }
+        },
+        _count: {
+          select: { comentarios: true }
+        }
+      }
     });
+
     res.status(200).json(posts);
   } catch (error) {
-    res.status(400).json(error);
+    console.error("Erro ao buscar posts:", error);
+    res.status(500).json({ erro: "Erro ao buscar publicações." });
   }
 });
 
-// GET /postComunidade/:id
+/* =====================================
+   LISTAR UM ÚNICO POST
+   ===================================== */
 router.get("/:id", async (req, res) => {
   try {
+    const postId = Number(req.params.id);
+
     const post = await prisma.postComunidade.findUnique({
-      where: { id: Number(req.params.id) },
-      include: { comentarios: true, adotante: true }
+      where: { id: postId },
+      include: {
+        adotante: { select: { id: true, nome: true, email: true } },
+        fotos: true,
+        comentarios: {
+          include: {
+            adotante: { select: { id: true, nome: true } }
+          },
+          orderBy: { createdAt: "desc" }
+        }
+      }
     });
+
     res.status(200).json(post);
   } catch (error) {
     res.status(400).json(error);
   }
 });
 
-// POST /postComunidade
+/* =====================================
+   CRIAR POST COM FOTOS
+   ===================================== */
 router.post("/", verificaToken, async (req, res) => {
-  const { texto, curtida, adotanteId } = req.body;
-  if (!texto || !adotanteId) return res.status(400).json({ erro: "Informe texto e adotanteId" });
-
   try {
-    const post = await prisma.postComunidade.create({
+    const { texto, fotos } = req.body;
+    const adotanteId = req.userLogadoId;
+
+    if (!texto)
+      return res.status(400).json({ erro: "Informe o texto" });
+
+    const novoPost = await prisma.postComunidade.create({
       data: {
         texto,
-        curtida: curtida ? Number(curtida) : 0,
-        adotanteId
+        adotanteId: String(adotanteId),
+        curtida: 0,
+
+        // Cria fotos vinculadas ao post
+        fotos: fotos?.length
+          ? {
+              create: fotos.map((url: string) => ({
+                descricao: "foto do post",
+                codigoFoto: url
+              }))
+            }
+          : undefined
       },
-      include: { adotante: true }
+      include: {
+        fotos: true,
+        adotante: {
+          select: { id: true, nome: true, email: true }
+        },
+        comentarios: true
+      }
     });
-    res.status(201).json(post);
+
+    res.status(201).json(novoPost);
   } catch (error) {
-    res.status(400).json(error);
+    console.log(error);
+    res.status(500).json({ erro: "Erro ao criar post" });
   }
 });
 
-// PATCH /postComunidade/:id
+/* =====================================
+   EDITAR POST (texto/curtida)
+   ===================================== */
 router.patch("/:id", verificaToken, async (req, res) => {
+  const postId = Number(req.params.id);
+  const adotanteId = req.userLogadoId;
   const { texto, curtida } = req.body;
+
   try {
-    const post = await prisma.postComunidade.update({
-      where: { id: Number(req.params.id) },
+    const post = await prisma.postComunidade.findUnique({
+      where: { id: postId }
+    });
+
+    if (!post)
+      return res.status(404).json({ erro: "Post não encontrado" });
+
+    if (post.adotanteId !== String(adotanteId))
+      return res.status(403).json({ erro: "Você não pode editar este post" });
+
+    const atualizado = await prisma.postComunidade.update({
+      where: { id: postId },
       data: {
         ...(texto !== undefined ? { texto } : {}),
         ...(curtida !== undefined ? { curtida: Number(curtida) } : {})
       }
     });
-    res.status(200).json(post);
+
+    res.status(200).json(atualizado);
   } catch (error) {
     res.status(400).json(error);
   }
 });
 
-// DELETE /postComunidade/:id
+/* =====================================
+   DELETAR POST (fotos + comentários)
+   ===================================== */
 router.delete("/:id", verificaToken, async (req, res) => {
+  const postId = Number(req.params.id);
+  const adotanteId = req.userLogadoId;
+
   try {
-    // opcional: deletar comentarios relacionados
-    await prisma.comentario.deleteMany({ where: { postComunidadeId: Number(req.params.id) } });
-    const excluido = await prisma.postComunidade.delete({ where: { id: Number(req.params.id) } });
-    res.status(200).json(excluido);
+    const post = await prisma.postComunidade.findUnique({
+      where: { id: postId },
+      include: { fotos: true }
+    });
+
+    if (!post)
+      return res.status(404).json({ erro: "Post não encontrado" });
+
+    if (post.adotanteId !== String(adotanteId))
+      return res.status(403).json({ erro: "Você não pode excluir este post" });
+
+    // Deleta fotos vinculadas ao post
+    await prisma.foto.deleteMany({
+      where: { postComunidadeId: postId }
+    });
+
+    // Deleta comentários vinculados ao post
+    await prisma.comentario.deleteMany({
+      where: { postComunidadeId: postId }
+    });
+
+    // Deleta o post
+    await prisma.postComunidade.delete({
+      where: { id: postId }
+    });
+
+    res.status(200).json({ mensagem: "Post excluído com sucesso" });
   } catch (error) {
-    res.status(400).json(error);
+    console.error("Erro ao excluir post:", error);
+    res.status(500).json({ erro: "Erro ao excluir post." });
   }
 });
 
