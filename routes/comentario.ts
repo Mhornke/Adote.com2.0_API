@@ -5,9 +5,42 @@ import { verificaToken } from "../middewares/verificaToken";
 
 const prisma = new PrismaClient();
 const router = Router();
+// post de postecomunidade
+router.post("/poste-comunidade", async (req, res) => {
+  try {
+    const { texto, adotanteId, fotos } = req.body;
+
+    const novoPost = await prisma.postComunidade.create({
+      data: {
+        texto,
+        adotanteId,
+        curtida: 0,
+
+        fotos: {
+          create: fotos.map(url => ({
+            descricao: "foto do post",
+            codigoFoto: url
+          }))
+        }
+      },
+      include: {
+        fotos: true,
+        adotante: {
+          select: { id: true, nome: true, email: true }
+        },
+        comentarios: true
+      }
+    });
+
+    res.status(201).json(novoPost);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ erro: "Erro ao criar post" });
+  }
+});
 
 // POST /comentario
-router.post("/", verificaToken, async (req, res) => {
+router.post("/comentario-postComunidade", verificaToken, async (req, res) => {
   const { texto, curtida, postComunidadeId } = req.body;
 
   const adotanteId = req.userLogadoId; 
@@ -105,9 +138,8 @@ router.patch("/:id", verificaToken, async (req, res) => {
   }
 });
 
-
 // DELETE /comentario/:id
-router.delete("/:id", verificaToken, async (req, res) => {
+router.delete("/comentario/:id", verificaToken, async (req, res) => {
   const adotanteId = req.userLogadoId;
   const comentarioId = Number(req.params.id);
 
@@ -134,7 +166,7 @@ router.delete("/:id", verificaToken, async (req, res) => {
   }
 });
 // DELETE /post/:id
-router.delete("/:id", verificaToken, async (req, res) => {
+router.delete("/poste/:id", verificaToken, async (req, res) => {
   const adotanteId = req.userLogadoId;
   const postId = Number(req.params.id);
 
