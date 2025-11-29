@@ -50,7 +50,8 @@ router.post("/", verificaToken, async (req, res) => {
         descricao: descricao ?? "",
         codigoFoto,
         animalId: animalId ? Number(animalId) : undefined,
-        animalPerdidoId: animalPerdidoId ? Number(animalPerdidoId) : undefined
+        animalPerdidoId: animalPerdidoId ? Number(animalPerdidoId) : undefined,
+        postComunidadeId: postComunidadeId ? Number(postComunidadeId) : undefined
       }
     });
     res.status(201).json(foto);
@@ -109,3 +110,4 @@ router.delete("/:id", verificaToken, async (req, res) => {
 });
 
 export default router;
+
