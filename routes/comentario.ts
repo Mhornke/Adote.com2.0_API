@@ -6,7 +6,7 @@ import { verificaToken } from "../middewares/verificaToken";
 const prisma = new PrismaClient();
 const router = Router();
 // post de postecomunidade
-router.post("/poste-comunidade", async (req, res) => {
+router.post("/posts", async (req, res) => {
   try {
     const { texto, adotanteId, fotos } = req.body;
 
