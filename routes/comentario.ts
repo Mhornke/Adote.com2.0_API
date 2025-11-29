@@ -139,8 +139,8 @@ router.patch("/:id", verificaToken, async (req, res) => {
 });
 
 // DELETE /comentario/:id
-router.delete("/comentario/:id", verificaToken, async (req, res) => {
-  const adotanteId = req.userLogadoId;
+router.delete("/comentario/:id", async (req, res) => {
+  //const adotanteId = req.userLogadoId;
   const comentarioId = Number(req.params.id);
 
   try {
@@ -152,9 +152,9 @@ router.delete("/comentario/:id", verificaToken, async (req, res) => {
       return res.status(404).json({ erro: "Comentário não encontrado" });
     }
 
-    if (comentario.adotanteId !== String(adotanteId)) {
-      return res.status(403).json({ erro: "Você não pode excluir este comentário" });
-    }
+   // if (comentario.adotanteId !== String(adotanteId)) {
+     // return res.status(403).json({ erro: "Você não pode excluir este comentário" });
+    //}
 
     const excluido = await prisma.comentario.delete({
       where: { id: comentarioId }
