@@ -179,6 +179,99 @@ router.get("/pesquisa/:termo", async (req, res) => {
   }
 });
 
+// Função auxiliar para identificar intenções de busca específicas
+// Retorna um objeto com o tipo de filtro e o valor, ou null
+function analisarIntencao(termo: string) {
+  const t = termo.trim().toLowerCase();
+  
+  // Mapeamento de Sexo
+  if (['macho', 'masculino'].includes(t)) return { tipo: 'sexo', valor: 'Macho' };
+  if (['fêmea', 'femea', 'feminino'].includes(t)) return { tipo: 'sexo', valor: 'Femea' };
+
+  // Mapeamento de Porte
+  if (['pequeno', 'p'].includes(t)) return { tipo: 'porte', valor: 'Pequeno' };
+  if (['medio', 'médio', 'm'].includes(t)) return { tipo: 'porte', valor: 'Medio' };
+  if (['grande', 'g'].includes(t)) return { tipo: 'porte', valor: 'Grande' };
+
+  // Mapeamento de Espécie (Assumindo que o nome da espécie no banco seja exato)
+  if (['gato', 'gatinho', 'felino'].includes(t)) return { tipo: 'especie', valor: 'Gato' };
+  if (['cachorro', 'cão', 'cao', 'canino'].includes(t)) return { tipo: 'especie', valor: 'Cachorro' };
+
+  return null;
+}
+
+router.get("/pesquisa/:termo", async (req, res) => {
+  const { termo } = req.params;
+
+  
+  const termoNumero = Number(termo);
+
+  if (!isNaN(termoNumero)) {
+    try {
+      const animais = await prisma.animal.findMany({
+        include: { especie: true, fotos: true }, 
+        where: {
+          disponivel: true,
+          OR: [
+            { idade: termoNumero },
+            { id: termoNumero } 
+          ]
+        }
+      });
+      return res.status(200).json(animais);
+    } catch (error) {
+      return res.status(400).json(error);
+    }
+  }
+
+  // Busca Textual (Nome, Descrição, Espécie, Sexo, Porte)
+  try {
+    const intencao = analisarIntencao(termo);
+    
+    // Lista de condições de busca (OR)
+    const condicoes: any[] = [
+      // Busca genérica por texto (nome e descrição)
+      { nome: { contains: termo, mode: 'insensitive' } },
+      { descricao: { contains: termo, mode: 'insensitive' } },
+      { especie: { nome: { contains: termo, mode: 'insensitive' } } }
+    ];
+
+    // Se identificamos que o usuário digitou uma categoria (ex: "Macho"),
+    // adicionamos essa busca específica com prioridade/exatidão.
+    if (intencao) {
+      if (intencao.tipo === 'sexo') {
+        condicoes.push({ sexo: intencao.valor });
+      }
+      if (intencao.tipo === 'porte') {
+        condicoes.push({ porte: intencao.valor });
+      }
+      // Se for espécie, já é coberto pelo contains acima, mas podemos reforçar
+      if (intencao.tipo === 'especie') {
+        condicoes.push({ especie: { nome: { equals: intencao.valor as string, mode: 'insensitive' } } });
+      }
+    }
+
+    const animais = await prisma.animal.findMany({
+      include: {
+        especie: true,
+        fotos: true // Recomendado incluir a primeira foto na listagem
+      },
+      where: {
+        disponivel: true, // Garante que só traz animais disponíveis
+        OR: condicoes
+      },
+      orderBy: {
+        updatedAt: 'desc' // Traz os mais recentes primeiro
+      }
+    });
+
+    return res.status(200).json(animais);
+
+  } catch (error) {
+    console.error(error); // Log do erro para debug
+    return res.status(400).json({ erro: "Erro ao realizar pesquisa" });
+  }
+});
 // GET /animais/:id
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
@@ -236,3 +329,4 @@ router.patch("/:id", verificaToken, async (req, res) => {
 });
 
 export default router;
+
