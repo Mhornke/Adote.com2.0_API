@@ -140,45 +140,6 @@ router.put("/:id", verificaToken, async (req, res) => {
   }
 });
 
-// GET /animais/pesquisa/:termo
-router.get("/pesquisa/:termo", async (req, res) => {
-  const { termo } = req.params;
-  const termoNumero = Number(termo);
-
-  if (isNaN(termoNumero)) {
-    try {
-      let termoCorrigido: string | undefined;
-      if (termo.toLowerCase() === 'macho') termoCorrigido = 'Macho';
-      else if (termo.toLowerCase() === 'femea' || termo.toLowerCase() === 'fêmea') termoCorrigido = 'Femea';
-
-      const animais = await prisma.animal.findMany({
-        include: { especie: true, fotos: true },
-        where: {
-          OR: [
-            { nome: { contains: termo } },
-            { especie: { nome: { contains: termo } } },
-            ...(termoCorrigido ? [{ sexo: termoCorrigido as 'Macho' | 'Femea' }] : [])
-          ]
-        }
-      });
-
-      res.status(200).json(animais);
-    } catch (error) {
-      res.status(400).json(error);
-    }
-  } else {
-    try {
-      const animais = await prisma.animal.findMany({
-        include: { especie: true, fotos: true },
-        where: { OR: [{ idade: termoNumero }] }
-      });
-      res.status(200).json(animais);
-    } catch (error) {
-      res.status(400).json(error);
-    }
-  }
-});
-
 // Função auxiliar para identificar intenções de busca específicas
 // Retorna um objeto com o tipo de filtro e o valor, ou null
 function analisarIntencao(termo: string) {
@@ -329,4 +290,5 @@ router.patch("/:id", verificaToken, async (req, res) => {
 });
 
 export default router;
+
 
