@@ -114,6 +114,7 @@ model Admin {
   email           String           @unique
   senha           String
   role            Role             @default(admin)
+  ativo           Boolean          @default(true)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   animais         Animal[]
@@ -121,6 +122,7 @@ model Admin {
 
   @@map("admins")
 }
+
 
 model Pedido {
   id         Int      @id @default(autoincrement())
