@@ -36,21 +36,29 @@ router.get("/", async (req, res) => {
     const posts = await prisma.postComunidade.findMany({
       orderBy: { createdAt: "desc" }, 
       include: {
-        
         adotante: {
           select: {
             id: true,
             nome: true,
             email: true,
-            
           }
         },
-       
         fotos: true,
-        
-       
+
+        comentarios: {
+          include: {
+            adotante: {
+              select: {
+                id: true,
+                nome: true
+              }
+            }
+          },
+          orderBy: { createdAt: "desc" }
+        },
+
         _count: {
-            select: { comentarios: true }
+          select: { comentarios: true }
         }
       }
     });
@@ -61,6 +69,7 @@ router.get("/", async (req, res) => {
     res.status(500).json({ erro: "Erro ao buscar publicações." });
   }
 });
+
 
 router.patch("/:id", verificaToken, async (req, res) => {
   const { texto, curtida } = req.body;
@@ -124,5 +133,46 @@ router.delete("/:id", verificaToken, async (req, res) => {
     res.status(400).json(error);
   }
 });
+// DELETE /post/:id
+router.delete("/:id", verificaToken, async (req, res) => {
+  const adotanteId = req.userLogadoId;
+  const postId = Number(req.params.id);
+
+  try {
+    // Verifica se o post existe
+    const post = await prisma.postComunidade.findUnique({
+      where: { id: postId },
+      include: { fotos: true }
+    });
+
+    if (!post) {
+      return res.status(404).json({ erro: "Post não encontrado" });
+    }
+
+    // Impede deletar post de outro usuário
+    if (post.adotanteId !== String(adotanteId)) {
+      return res.status(403).json({ erro: "Você não pode excluir este post" });
+    }
+
+    // Deleta fotos vinculadas ao post
+    await prisma.foto.deleteMany({
+      where: { postComunidadeId: postId }
+    });
+
+    // Agora deleta o post
+    const excluido = await prisma.postComunidade.delete({
+      where: { id: postId }
+    });
+
+    res.status(200).json({
+      mensagem: "Post excluído com sucesso",
+      post: excluido
+    });
+  } catch (error) {
+    console.error("Erro ao excluir post:", error);
+    res.status(500).json({ erro: "Erro ao excluir post." });
+  }
+});
+
 
 export default router;
