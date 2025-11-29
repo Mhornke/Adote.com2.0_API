@@ -17,7 +17,7 @@ router.post("/posts", async (req, res) => {
         curtida: 0,
 
         fotos: {
-          create: fotos.map(url => ({
+          create: fotos.map((url: string) => ({
             descricao: "foto do post",
             codigoFoto: url
           }))
