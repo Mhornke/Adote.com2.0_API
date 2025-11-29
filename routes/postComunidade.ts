@@ -139,7 +139,37 @@ router.patch("/:id", verificaToken, async (req, res) => {
     res.status(400).json(error);
   }
 });
+// Rota específica para CURTIR (PATCH /posts-comunidade/:id/curtir)
+router.patch("/:id/curtir", verificaToken, async (req, res) => {
+  const postId = Number(req.params.id);
+  const { tipo } = req.body; // Recebe "add" ou "remove"
 
+  try {
+    // Verifica se o post existe
+    const post = await prisma.postComunidade.findUnique({
+       where: { id: postId } 
+    });
+
+    if (!post) return res.status(404).json({ erro: "Post não encontrado" });
+
+    // Atualiza usando increment/decrement (atômico e seguro)
+    const atualizado = await prisma.postComunidade.update({
+      where: { id: postId },
+      data: {
+        curtida: {
+          // Se tipo for "add", soma 1. Se for remover, subtrai 1.
+          increment: tipo === "add" ? 1 : 0,
+          decrement: tipo === "remove" ? 1 : 0
+        }
+      }
+    });
+
+    res.status(200).json(atualizado);
+  } catch (error) {
+    console.log(error);
+    res.status(400).json(error);
+  }
+});
 /* =====================================
    DELETAR POST (fotos + comentários)
    ===================================== */
