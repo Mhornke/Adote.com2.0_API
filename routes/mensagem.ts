@@ -22,6 +22,15 @@ router.get("/chats", verificaToken, async (req: any, res) => {
       },
       orderBy: { updatedAt: "desc" },
       include: {
+        
+        participante1: {
+            select: { id: true, nome: true, email: true } 
+        },
+        participante2: {
+            select: { id: true, nome: true, email: true }
+        },
+        // ----------------------------------
+
         mensagens: {
           orderBy: { dataEnvio: "asc" },
         },
